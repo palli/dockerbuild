@@ -1,0 +1,44 @@
+#!/bin/sh
+REMOTE_REPOSITORY="$1"
+DOCKER_IMAGE=buildserver:ubuntu-12.04
+PACKAGE_DIR=/var/cache/packages/
+TEMPDIR=`mktemp -d`
+set -e
+#trap "rm -rf $TEMPDIR" EXIT
+
+
+main() {
+	if [ -z $REMOTE_REPOSITORY ]; then
+		fail "Usage: $0 <remote repository>"
+	fi
+	
+	which reprepro > /dev/null || fail "command reprepro not found"
+
+	get_remote_repo ;
+	update_repository ;
+	push_remote_repo ;
+}
+
+
+get_remote_repo() {
+	rsync -pav $REMOTE_REPOSITORY/ $TEMPDIR/
+}
+
+update_repository() {
+	cd $PACKAGE_DIR
+	for distro in * ; do
+		cd $TEMPDIR
+		find $PACKAGE_DIR/$distro -iname \*deb -exec reprepro includedeb $distro {} \;
+	done
+}
+push_remote_repo() {
+	rsync -pav $TEMPDIR/ $REMOTE_REPOSITORY/
+}
+fail() {
+	echo $@
+	exit 1
+}
+
+
+
+main; 

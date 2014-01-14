@@ -1,0 +1,56 @@
+#!/bin/sh
+
+set -e
+GIT_REPO=$1
+GIT_REPOS=""
+tmpdir=`mktemp -d`
+DESTINATION=/var/cache/packages/
+PLATFORMS="ubuntu:12.04 debian:wheezy"
+PLATFORMS="buildserver:debian-wheezy"
+
+
+mkdir -p $DESTINATION/
+mkdir -p "$tmpdir"/bin "$tmpdir"/results
+
+rsync -pav `dirname $0`/ "$tmpdir"/bin
+
+if [ -z $GIT_REPO ]; then
+	echo "Usage: $0 <url to git repository>"
+	exit 1
+fi
+
+exit_cleanly() {
+	echo "Cleaning up $tmpdir"
+	rm -rf -- "$tmpdir"
+	exit 0
+}
+trap exit_cleanly EXIT
+fail() {
+	echo $@
+	exit 1
+}
+
+
+check_for_command() {
+	echo -n "Checking for $1 ..."
+	which $1 || fail "$1 not found in path"
+}
+
+check_for_command "git"
+check_for_command "docker"
+
+
+echo "Using temporary directory $tmpdir"
+echo "Cloning git repository $GIT_REPO "
+
+for i in $PLATFORMS; do
+	cd $tmpdir
+	rm -rf repo
+	git clone "$GIT_REPO" repo
+	docker run -i -t -v "$tmpdir":/build $i /build/bin/build_package
+done
+
+echo "Finished building package"
+cp -vr $tmpdir/results/* $DESTINATION
+
+

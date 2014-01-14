@@ -1,0 +1,32 @@
+#!/bin/sh
+
+set -e
+
+main() {
+
+	which apt-get && build_debian_package && return
+
+	which yum && build_rpm_package && return
+}
+
+fail() {
+	echo $@
+	exit 1
+}
+
+build_debian_package() {
+	apt-get update
+	apt-get install -y debhelper git devscripts facter
+	DISTRIB_CODENAME=`facter lsbdistcodename`
+	cd /build/repo
+	make debs
+	mkdir -p /build/results/$DISTRIB_CODENAME/
+	cp deb-build/*deb /build/results/$DISTRIB_CODENAME/
+	return 0
+}
+
+build_rpm_package() {
+	return 0
+}
+
+main;

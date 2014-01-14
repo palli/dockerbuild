@@ -1,0 +1,28 @@
+About
+=====
+
+Set of scripts made to quickly generate debian/rpm packages from a remote git repo.
+
+
+Usage
+=====
+
+The following will build debian packages for all platforms granted that
+remote repository exists and it has a debian/ directory
+
+    ./bin/packager <remote_git_repo>
+
+
+All artifacts will be saved in /var/cache/packages/ by default. To upload
+these to a remote debian repository, run the following:
+
+    ./bin/update_debian_repository <remote_debian_repo>
+
+
+Examples
+========
+Build package pynag from github and upload it to opensource.is:
+
+    ./bin/packager http://github.com/pynag/pynag
+    ./bin/update_debian_repository tito@opensource.ok.is:/var/www/opensource.ok.is/repo/debian/
+
