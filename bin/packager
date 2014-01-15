@@ -13,7 +13,7 @@ PLATFORMS="$PLATFORMS buildserver-debian:wheezy buildserver-debian:jessie builds
 mkdir -p $DESTINATION/
 mkdir -p "$tmpdir"/bin "$tmpdir"/results
 
-rsync -pav `dirname $0`/ "$tmpdir"/bin
+rsync -pav `dirname $0`/ "$tmpdir"/bin > /dev/null
 
 if [ -z $GIT_REPO ]; then
 	echo "Usage: $0 <url to git repository>"
@@ -47,8 +47,10 @@ echo "Cloning git repository $GIT_REPO "
 for i in $PLATFORMS; do
 	cd $tmpdir
 	rm -rf repo
-	git clone "$GIT_REPO" repo
-	docker run -i -t -v "$tmpdir":/build $i /build/bin/build_package
+	git clone "$GIT_REPO" repo > /dev/null
+	echo "Building package using $i docker image"
+	buildlog=`mktemp`
+	docker run -i -t -v "$tmpdir":/build $i /build/bin/build_package > $buildlog || fail "Failed to build package. Build log in $buildlog" 
 done
 
 echo "Finished building package"

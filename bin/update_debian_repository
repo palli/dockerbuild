@@ -4,7 +4,8 @@ DOCKER_IMAGE=buildserver:ubuntu-12.04
 PACKAGE_DIR=/var/cache/packages/
 TEMPDIR=`mktemp -d`
 set -e
-#trap "rm -rf $TEMPDIR" EXIT
+trap "rm -rf $TEMPDIR" EXIT
+#trap "echo please remember to clean up $TEMPDIR" EXIT
 
 
 main() {
@@ -19,18 +20,37 @@ main() {
 
 
 get_remote_repo() {
-	rsync -pav $REMOTE_REPOSITORY/ $TEMPDIR/
+	rsync -pa $REMOTE_REPOSITORY/ $TEMPDIR/
 }
 
 update_repository() {
 	cd $PACKAGE_DIR
 	for distro in * ; do
 		cd $TEMPDIR
-		find $PACKAGE_DIR/$distro -iname \*deb -exec reprepro includedeb $distro {} \;
+		#find $PACKAGE_DIR/$distro -iname \*deb -exec reprepro includedeb $distro {} \;
+		for i in `find $PACKAGE_DIR/$distro -iname \*deb` ; do
+ 			add_package_to_repository $i $TEMPDIR $distro \;
+		done
 	done
 }
+
+# Add a single package to a given repository
+
+add_package_to_repository() {
+	package=$1
+	repo=$2
+	distro=$3
+	cd $repo
+	package_name=`basename $package`
+	files_already_in_repo=`find $repo -iname $package_name`
+	if [ -z "$files_already_in_repo" ]; then
+		reprepro includedeb $distro $package
+	else
+		echo "$package is already here"
+	fi
+}
 push_remote_repo() {
-	rsync -pav $TEMPDIR/ $REMOTE_REPOSITORY/
+	rsync -pa $TEMPDIR/ $REMOTE_REPOSITORY/
 }
 fail() {
 	echo $@

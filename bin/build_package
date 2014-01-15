@@ -1,13 +1,12 @@
 #!/bin/bash
 
 set -e
-echo yayaya
 main() {
 
 	
-	which apt-get && build_debian_package && return
+	which apt-get >/dev/null && build_debian_package && return
 
-	which yum && build_rpm_package && return
+	which yum >/dev/null && build_rpm_package && return
 }
 
 fail() {
@@ -55,12 +54,7 @@ build_debian_package() {
         fi
 	mkdir -p /build/results/$DISTRIB_CODENAME/
 	suffix=`get_commit_count_suffix`
-	if [ "$DISTRIB_ID" == "Ubuntu" ]; then
-		$DISTRIBUTION=$DISTRIB_CODENAME
-	else
-		$DISTRIBUTION=unstable
-	fi
-	dch -l "$suffix" "Version bump" --distribution $DISTRIBUTION
+	dch -l "$suffix" "Version bump" --distribution $DISTRIB_CODENAME --force-distribution
         dpkg-buildpackage -b
         mv ../*deb ../*changes  /build/results/$DISTRIB_CODENAME/
 	return 0
