@@ -6,7 +6,8 @@ GIT_REPOS=""
 tmpdir=`mktemp -d`
 DESTINATION=/var/cache/packages/
 PLATFORMS="ubuntu:12.04 debian:wheezy"
-PLATFORMS="buildserver:debian-wheezy"
+PLATFORMS="buildserver-ubuntu:12.10  buildserver-ubuntu:12.04"
+PLATFORMS="$PLATFORMS buildserver-debian:wheezy buildserver-debian:jessie buildserver-debian:squeeze"
 
 
 mkdir -p $DESTINATION/

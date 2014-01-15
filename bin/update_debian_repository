@@ -12,8 +12,6 @@ main() {
 		fail "Usage: $0 <remote repository>"
 	fi
 	
-	which reprepro > /dev/null || fail "command reprepro not found"
-
 	get_remote_repo ;
 	update_repository ;
 	push_remote_repo ;

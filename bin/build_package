@@ -1,9 +1,10 @@
-#!/bin/sh
+#!/bin/bash
 
 set -e
-
+echo yayaya
 main() {
 
+	
 	which apt-get && build_debian_package && return
 
 	which yum && build_rpm_package && return
@@ -14,14 +15,54 @@ fail() {
 	exit 1
 }
 
+install_debian_packages() {
+	PACKAGES_TO_INSTALL=""
+	for package in $@; do
+		dpkg -l | awk '{ print $2 }' | grep -q $package || PACKAGES_TO_INSTALL="$PACKAGES_TO_INSTALL $package"
+	done
+	if [ ! -z "$PACKAGES_TO_INSTALL" ]; then
+		apt-get update
+		apt-get install -y $PACKAGES_TO_INSTALL
+	fi
+	return
+}
+
+# Return latest tag in a git repository
+get_latest_tag() {
+	git describe --abbrev=0
+}
+
+# Return number of commits since last tag
+get_commit_count_suffix() {
+	last_tag=$(get_latest_tag);
+	describe=$(git describe);
+	echo .git${describe} | sed s/$last_tag// | sed 's/\-/\./g'
+}
+
+
 build_debian_package() {
-	apt-get update
-	apt-get install -y debhelper git devscripts facter
-	DISTRIB_CODENAME=`facter lsbdistcodename`
+	set -e
+	install_debian_packages debhelper git devscripts facter
+	DISTRIB_CODENAME=`facter | grep -w ^lsbdistcodename | awk '{ print $3}'`
+	DISTRIB_ID=`facter | grep -w ^lsbdistid | awk '{ print $3}'`
 	cd /build/repo
-	make debs
+	if [ ! -d debian ]; then
+            if [ ! -d debian.upstream ]; then
+                fail "Remote repository does not have a debian or a debian.upstream directory"
+            fi
+            ln -fs debian.upstream debian
+	    
+        fi
 	mkdir -p /build/results/$DISTRIB_CODENAME/
-	cp deb-build/*deb /build/results/$DISTRIB_CODENAME/
+	suffix=`get_commit_count_suffix`
+	if [ "$DISTRIB_ID" == "Ubuntu" ]; then
+		$DISTRIBUTION=$DISTRIB_CODENAME
+	else
+		$DISTRIBUTION=unstable
+	fi
+	dch -l "$suffix" "Version bump" --distribution $DISTRIBUTION
+        dpkg-buildpackage -b
+        mv ../*deb ../*changes  /build/results/$DISTRIB_CODENAME/
 	return 0
 }
 
