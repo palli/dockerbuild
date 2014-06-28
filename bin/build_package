@@ -54,8 +54,8 @@ build_debian_package() {
         fi
 	mkdir -p /build/results/$DISTRIB_CODENAME/
 	suffix=`get_commit_count_suffix`
-	dch -l "$suffix" "Version bump" --distribution $DISTRIB_CODENAME --force-distribution
-        dpkg-buildpackage -b
+	dch -l "$suffix" "Version bump" --distribution $DISTRIB_CODENAME --force-distribution || fail "dch failed"
+        dpkg-buildpackage -b || fail "dpkg-buildpackage failed"
         mv ../*deb ../*changes  /build/results/$DISTRIB_CODENAME/
 	return 0
 }

@@ -24,5 +24,5 @@ Examples
 Build package pynag from github and upload it to opensource.is:
 
     ./bin/packager http://github.com/pynag/pynag
-    ./bin/update_debian_repository tito@opensource.ok.is:/var/www/opensource.ok.is/repo/debian/
+    ./bin/update_debian_repository tito@opensource.ok.is:/var/www/sites/opensource.ok.is/repo/debian/
 
